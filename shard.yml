@@ -1,0 +1,19 @@
+name: decent-crystal
+version: 0.1.0
+
+authors:
+  - Henry <omgredstone@gmail.com>
+
+targets:
+    decent:
+        main: src/decent.cr
+
+dependencies:
+    kemal:
+        github: kemalcr/kemal
+    sqlite3:
+        github: crystal-lang/crystal-sqlite3
+
+crystal: 0.24.1
+
+license: MIT
