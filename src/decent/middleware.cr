@@ -7,8 +7,15 @@ module Decent
                 begin
                     return call_next(ctx)
                 rescue ex : Decent::ApiException
-                    return {error: ex}.to_json
+                    res = {error: ex}.to_json
+                rescue ex : Exception
+                    error = {code: "UNKNOWN", message: ex.message}
+                    res = {error: error}.to_json
                 end
+
+                ctx.response.status_code = 500
+                ctx.response.print res
+                ctx.response.close
             end
 
             return call_next(ctx)

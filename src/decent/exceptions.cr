@@ -1,7 +1,6 @@
 module Decent
-    class ApiException < Exception
-        def initialize(@code : String, message : String)
-            super message
+    class ApiException < Kemal::Exceptions::CustomException
+        def initialize(@code : String, @message : String)
         end
 
         def to_json(builder : JSON::Builder)
@@ -9,7 +8,8 @@ module Decent
                 builder.field "code", @code
                 builder.field "message", @message
 
-                if name, val = extra_param
+                unless extra_param.nil?
+                    name, val = extra_param.not_nil!
                     builder.field name, val
                 end
             end
@@ -47,9 +47,13 @@ module Decent
     end
 
     class IncompleteParametersException < ApiException
-        def initialize(message : String, *args : String)
+        def initialize(message : String, missing : NamedTuple)
             super "INCOMPLETE_PARAMETERS", message
-            @missing = args
+
+            @missing = [] of String
+            missing.each { |k, v|
+                (@missing << k.to_s) if v
+            }
         end
 
         def extra_param

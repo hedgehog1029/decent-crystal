@@ -10,12 +10,12 @@ module Decent
         def ensure(ctx : HTTP::Server::Context) : Session
             session_id = ctx.get("session_id").as(String)
 
-            raise Decent::InvalidSessionException.new("No session ID provided!") if session_id.nil?
-
             session = Session.retrieve(@db, session_id)
             session
         rescue DB::Error
             raise Decent::InvalidSessionException.new("No session with that ID!")
+        rescue KeyError
+            raise Decent::InvalidSessionException.new("No session ID provided!")
         end
 
         # Retrieve all the active sessions for a user
@@ -49,6 +49,8 @@ module Decent
 
     # Represents an active session
     class Session
+        @user : User?
+
         def initialize(@db : DB::Database, @id : String, @created : Int64, @user_id : String)
         end
 
@@ -78,7 +80,11 @@ module Decent
         end
 
         def user
-            User.retrieve(@db, @user_id)
+            if @user.nil?
+                @user = User.retrieve(@db, @user_id)
+            end
+
+            @user.as(User)
         end
 
         def is_admin?
@@ -91,7 +97,13 @@ module Decent
             end
         end
 
-        def to_json(builder : JSON::PullParser)
+        def ensure_owner(owner_id : String)
+            unless user.id == owner_id
+                raise Decent::NotYoursException.new("You do not own this resource.")
+            end
+        end
+
+        def to_json(builder : JSON::Builder)
             builder.object do
                 builder.field "id", @id
                 builder.field "dateCreated", @created
