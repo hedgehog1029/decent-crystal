@@ -8,7 +8,15 @@ module Decent
             builder.object do
                 builder.field "code", @code
                 builder.field "message", @message
+
+                if name, val = extra_param
+                    builder.field name, val
+                end
             end
+        end
+
+        def extra_param
+            nil
         end
 
         getter code
@@ -39,14 +47,55 @@ module Decent
     end
 
     class IncompleteParametersException < ApiException
-        def initialize(message : String)
+        def initialize(message : String, *args : String)
             super "INCOMPLETE_PARAMETERS", message
+            @missing = args
+        end
+
+        def extra_param
+            {"missing", @missing}
         end
     end
 
     class InvalidParameterException < ApiException
         def initialize(message : String)
             super "INVALID_PARAMETER_TYPE", message
+        end
+    end
+
+    class InvalidSessionException < ApiException
+        def initialize(message : String)
+            super "INVALID_SESSION_ID", message
+        end
+    end
+
+    class UploadFailedException < ApiException
+        def initialize(message : String)
+            super "UPLOAD_FAILED", message
+        end
+    end
+
+    class NameAlreadyTakenException < ApiException
+        def initialize(message : String)
+            super "NAME_ALREADY_TAKEN", message
+        end
+    end
+
+    class ShortPasswordException < ApiException
+        def initialize(message : String)
+            super "SHORT_PASSWORD", message
+        end
+    end
+
+    class IncorrectPasswordException < ApiException
+        def initialize(message : String)
+            super "INCORRECT_PASSWORD", message
+        end
+    end
+
+    class InvalidNameException < ApiException
+        def initialize(message : String)
+            super "INVALID_NAME", message
         end
     end
 end

@@ -12,8 +12,25 @@ post "/api/sessions" do |ctx|
     result = sessions.login(user, pass)
 
     if result.nil?
-        
+        raise Decent::NotFoundException.new("The username or password is incorrect.")
     else
-
+        {sessionID: result.id}.to_json
     end
+end
+
+get "/api/sessions/:id" do |ctx|
+    session_id = ctx.params.url["id"].as(String)
+
+    session = Decent::Session.retrieve(sessions.db, session_id)
+
+    {session: session, user: session.user}.to_json
+end
+
+delete "/api/sessions/:id" do |ctx|
+    session_id = ctx.params.url["id"].as(String)
+
+    session = Decent::Session.retrieve(sessions.db, session_id)
+    session.delete
+
+    {}.to_json
 end

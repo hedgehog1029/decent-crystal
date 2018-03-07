@@ -3,6 +3,12 @@ module Decent
         def call(ctx)
             if ctx.request.path.starts_with?("/api")
                 ctx.response.content_type = "application/json"
+
+                begin
+                    return call_next(ctx)
+                rescue ex : Decent::ApiException
+                    return {error: ex}.to_json
+                end
             end
 
             return call_next(ctx)

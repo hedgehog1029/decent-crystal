@@ -1,11 +1,6 @@
-module Decent
-    class UnauthorizedException < Kemal::Exceptions::CustomException
-        def initialize(context : HTTP::Server::Context)
-            context.response.status_code = 401
-            super context
-        end
-    end
+require "crypto/bcrypt/password"
 
+module Decent
     class Sessions
         def initialize(@db : DB::Database)
         end
@@ -15,10 +10,12 @@ module Decent
         def ensure(ctx : HTTP::Server::Context) : Session
             session_id = ctx.get("session_id").as(String)
 
-            raise UnauthorizedException.new(ctx) if session_id.nil?
+            raise Decent::InvalidSessionException.new("No session ID provided!") if session_id.nil?
 
             session = Session.retrieve(@db, session_id)
             session
+        rescue DB::Error
+            raise Decent::InvalidSessionException.new("No session with that ID!")
         end
 
         # Retrieve all the active sessions for a user
@@ -37,8 +34,16 @@ module Decent
             session_list
         end
 
-        def login(username : String, password : String) : String?
-            
+        def login(username : String, password : String) : Session?
+            uid, username, remote_pw = @db.query_one "select * from authorization where username=?", username, as: { String, String, String }
+
+            hashed = Crypto::Bcrypt::Password.create(password)
+
+            if hashed == remote_pw
+                Session.create(@db, uid)
+            else
+                nil
+            end
         end
     end
 
@@ -49,15 +54,27 @@ module Decent
 
         getter id, created, user_id
 
-        # Get time that session was created
-        def get_created : Time
-            Time.epoch_ms(@created)
-        end
-
         def self.retrieve(db : DB::Database, id : String)
             sid, created, user = db.query_one "select * from sessions where id=?", id, as: { String, Int64, String }
 
             new db, sid, created, user
+        end
+
+        def self.create(db : DB::Database, user_id : String)
+            id = Random::Secure.hex(12)
+            created = Time.utc_now.epoch_ms
+
+            db.exec "insert into sessions values (?, ?, ?)", id, created, user_id
+            new db, id, created, user_id
+        end
+
+        def delete
+            @db.exec "delete from sessions where id=?", @id
+        end
+
+        # Get time that session was created
+        def get_created : Time
+            Time.epoch_ms(@created)
         end
 
         def user
@@ -66,6 +83,12 @@ module Decent
 
         def is_admin?
             user.permissionLevel == "admin"
+        end
+
+        def ensure_admin
+            unless is_admin?
+                raise Decent::MustBeAdminException.new("You must be an admin to modify this resource.")
+            end
         end
 
         def to_json(builder : JSON::PullParser)
