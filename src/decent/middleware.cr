@@ -28,7 +28,7 @@ module Decent
                 ctx.params.query["sessionID"]? ||
                 ctx.request.headers["X-Session-ID"]?
 
-            ctx.set("session_id", session_id.as(String))
+            ctx.set("session_id", session_id.as(String).to_i32)
         end
     end
 end

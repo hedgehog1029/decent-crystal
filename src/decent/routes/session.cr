@@ -6,8 +6,8 @@ get "/api/sessions" do |ctx|
 end
 
 post "/api/sessions" do |ctx|
-    user = ctx.params.json["username"].as(String)
-    pass = ctx.params.json["pass"].as(String)
+    user = ctx.params.json["username"]?.assert_string
+    pass = ctx.params.json["pass"]?.assert_string
 
     result = ctx.sessions.login(user, pass)
 
@@ -19,18 +19,19 @@ post "/api/sessions" do |ctx|
 end
 
 get "/api/sessions/:id" do |ctx|
-    session_id = ctx.params.url["id"].as(String)
+    session_id = ctx.params.url["id"]?.assert_string
 
-    session = Decent::Session.retrieve(ctx.db, session_id)
+    session = Repo.get(Decent::Session, session_id)
+    raise Decent::InvalidSessionException.new("Invalid session ID!") if session.nil?
 
     {session: session, user: session.user}.to_json
 end
 
 delete "/api/sessions/:id" do |ctx|
-    session_id = ctx.params.url["id"].as(String)
+    session_id = ctx.params.url["id"]?.assert_string
 
-    session = Decent::Session.retrieve(ctx.db, session_id)
-    session.delete
+    session = Repo.get(Decent::Session, session_id)
+    Repo.delete(session) unless session.nil?
 
     Decent.empty_json
 end

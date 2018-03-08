@@ -103,3 +103,29 @@ module Decent
         end
     end
 end
+
+# Helper macros + functions
+
+macro assert_found(*vars)
+    {% for name, i in vars %}
+        {% if name != vars.last %}
+            raise Decent::NotFoundException.new({{vars.last}}) if {{name.id}}.nil?
+        {% end %}
+    {% end %}
+end
+
+macro assert_exists(*vars)
+    {% for name, i in vars %}
+        {% if name != vars.last %}
+            raise Decent::IncompleteParametersException.new({{vars.last}}, { {{name.id}}: true }) if {{name.id}}.nil?
+        {% end %}
+    {% end %}
+end
+
+class Object
+    def assert_string
+        raise Decent::IncompleteParametersException.new("Missing required parameter.", {string: true}) if self.nil?
+        raise Decent::InvalidParameterException.new("Parameter was not a string.") unless self.is_a?(String)
+        return self.as(String)
+    end
+end

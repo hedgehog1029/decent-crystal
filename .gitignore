@@ -2,3 +2,5 @@
 /lib/
 /bin/
 /.shards/
+config.yml
+data.db

@@ -1,98 +1,83 @@
-module Decent
-    class Message
-        JSON.mapping(
-            id: String,
-            channel_id: {type: String, key: "channelID"},
-            text: String,
-            author_id: {type: String, key: "authorID"},
-            author_name: {type: String, key: "authorUsername"},
-            author_avatar: {type: String, key: "authorAvatarURL"},
-            created: {type: Int64, key: "dateCreated"},
-            edited: {type: Int64?, key: "dateEdited"},
-            reactions: Array(String)
-        )
+class Message < Crecto::Model
+    include Crecto::Schema
 
-        def initialize(@id, @channel_id, @text, @author_id, @author_name, @author_avatar, @created, @edited, @reactions)
-        end
+    schema "messages" do
+        field :channel_id, PkeyValue
+        field :text, String
+        belongs_to :user, Decent::User
+        field :created, Int64
+        field :edited, Int64
+    end
 
-        getter id, channel_id, text, author_id, created, edited, reactions
+    validate_required [:channel_id, :text, :created]
 
-        def self.create(db : DB::Database, channel_id : String, text : String, user : Decent::User)
-            id = Random::DEFAULT.hex(10)
-            created = Time.utc_now.epoch_ms
-            reactions = Array(String).new
+    def to_json(builder : JSON::Builder)
+        builder.object do
+            user = Repo.get_association(self, :user).as(Decent::User)
+            raise "Invalid user" if user.nil?
 
-            db.exec "insert into messages values (?, ?, ?, ?, ?, ?, ?)", id, channel_id, text, user.id, created, nil, reactions
-            new id, channel_id, text, user.id, user.username, user.avatarURL, created, nil, reactions
-        end
-
-        def self.retrieve(db : DB::Database, message_id : String)
-            r = db.query_one "select * from messages where id=?", message_id, as: {String, String, String, String, Int64, Int64?, String}
-            id, channel_id, text, user_id, created, edited, reactions_txt = r
-            reactions = Array(String).from_json(reactions_txt)
-
-            user = Decent::User.retrieve(db, user_id)
-
-            new id, channel_id, text, user_id, user.username, user.avatarURL, created, edited, reactions
-        end
-
-        def author(db : DB::Database)
-            Decent::User.retrieve(db, @author_id)
-        end
-
-        def edit(db : DB::Database, text : String)
-            db.exec "update messages set text=? where id=?", text, @id
-            @text = text
-        end
-
-        def delete(db : DB::Database)
-            db.exec "delete from messages where id=?", @id
+            builder.field "id", @id
+            builder.field "channelID", @channel_id
+            builder.field "text", @text
+            builder.field "authorID", user.id
+            builder.field "authorUsername", user.username
+            builder.field "authorAvatarURL", user.avatar
+            builder.field "dateCreated", @created
+            builder.field "dateEdited", @edited
         end
     end
 end
 
 post "/api/messages" do |ctx|
     session = ctx.ensure_session
-    channel_id = ctx.params.json["channelID"].as(String)
-    text = ctx.params.json["text"].as(String)
+    channel_id = ctx.params.json["channelID"]?.assert_string
+    text = ctx.params.json["text"]?.assert_string
     user = session.user
 
-    msg = Decent::Message.create(ctx.db, channel_id, text, user)
-    {messageID: msg.id}.to_json
+    msg = Message.new
+    msg.channel_id = channel_id
+    msg.text = text
+    msg.user = user
+    ch = Repo.insert(msg)
+
+    raise Decent::InvalidParameterException.new("Error committing data.") unless ch.valid?
+
+    {messageID: ch.instance.id}.to_json
 end
 
 get "/api/messages/:id" do |ctx|
-    message_id = ctx.params.url["id"].as(String)
-    msg = Decent::Message.retrieve(ctx.db, message_id)
+    message_id = ctx.params.url["id"].assert_string.to_i32
+    msg = Repo.get(Message, message_id)
+    raise Decent::NotFoundException.new("That message wasn't found.") if msg.nil?
 
     {message: msg}.to_json
-rescue DB::Error
-    raise Decent::NotFoundException.new("That message wasn't found.")
 end
 
 patch "/api/messages/:id" do |ctx|
     session = ctx.ensure_session
-    message_id = ctx.params.url["id"].as(String)
-    new_text = ctx.params.json["text"].as(String)
+    message_id = ctx.params.url["id"].assert_string.to_i32
+    new_text = ctx.params.json["text"].assert_string
 
-    msg = Decent::Message.retrieve(ctx.db, message_id)
-    session.ensure_owner(msg.author_id)
-    msg.edit(ctx.db, new_text)
+    msg = Repo.get(Message, message_id)
+    raise Decent::NotFoundException.new("That message wasn't found.") if msg.nil?
+
+    session.ensure_owner(msg.user_id)
+    msg.text = new_text
+    Repo.update(msg)
 
     Decent.empty_json
-rescue DB::Error
-    raise Decent::NotFoundException.new("That message wasn't found.")
 end
 
 delete "/api/messages/:id" do |ctx|
     session = ctx.ensure_session
-    message_id = ctx.params.url["id"].as(String)
-    msg = Decent::Message.retrieve(ctx.db, message_id)
+    message_id = ctx.params.url["id"].assert_string.to_i32
+    msg = Repo.get(Message, message_id)
+    raise Decent::NotFoundException.new("That message wasn't found.") if msg.nil?
 
     unless session.is_admin?
-        session.ensure_owner(msg.author_id)
+        session.ensure_owner(msg.user_id)
     end
 
-    msg.delete(ctx.db)
+    Repo.delete(msg)
     Decent.empty_json
 end

@@ -1,6 +1,6 @@
-require "db"
 require "kemal"
 require "sqlite3"
+require "crecto"
 require "json"
 require "yaml"
 require "./decent/*"
@@ -12,15 +12,14 @@ class HTTP::Server
         macro finished
             @decent_config = Decent::Config.from_yaml(File.open("config.yml"))
             @settings = Decent::ServerSettings.new("decent-crystal server", "Unauthorized!")
-            @db : DB::Database = DB.open "sqlite3://./data.db"
-            @sessions = Decent::Sessions.new(db)
+            @sessions = Decent::Sessions.new
         end
 
         def ensure_session
             @sessions.ensure(self)
         end
 
-        getter decent_config, settings, db, sessions
+        getter decent_config, settings, sessions
     end
 end
 
