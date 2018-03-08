@@ -1,27 +1,24 @@
-# decent
+# decent-crystal
 
-TODO: Write a description here
+Decent.chat server written in Crystal
 
 ## Installation
 
-TODO: Write installation instructions here
+```
+git clone https://github.com/hedgehog1029/decent-crystal.git
+cd decent-crystal
+shards update
+shards build
+```
 
 ## Usage
 
-TODO: Write usage instructions here
+it sorta works rn
 
 ## Development
 
-TODO: Write development instructions here
-
-## Contributing
-
-1. Fork it ( https://github.com/[your-github-name]/decent/fork )
-2. Create your feature branch (git checkout -b my-new-feature)
-3. Commit your changes (git commit -am 'Add some feature')
-4. Push to the branch (git push origin my-new-feature)
-5. Create a new Pull Request
+do the thing!
 
 ## Contributors
 
-- [[your-github-name]](https://github.com/[your-github-name]) Henry - creator, maintainer
+- [hedgehog1029](https://github.com/hedgehog1029) Henry - creator, maintainer
