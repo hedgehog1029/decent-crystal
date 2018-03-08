@@ -122,6 +122,11 @@ macro assert_exists(*vars)
     {% end %}
 end
 
+def assert_valid_name(name : String)
+    t = name =~ /^[a-zA-Z-_]+$/
+    raise Decent::InvalidNameException.new("Name must contain only alphanumeric characters, with dashes and/or underscores") if t.nil?
+end
+
 class Object
     def assert_string
         raise Decent::IncompleteParametersException.new("Missing required parameter.", {string: true}) if self.nil?
