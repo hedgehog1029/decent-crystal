@@ -3,7 +3,7 @@ class DChannel < Crecto::Model
 
     schema "channels" do
         field :name, String
-        has_many :pins, Message
+        has_many :pins, Message, foreign_key: "channel_id"
     end
 
     validate_required [:name]
@@ -22,7 +22,7 @@ class Ack < Crecto::Model
 
     schema "acks" do
         field :user_id, PkeyValue, primary_key: true
-        field :channel_id, PkeyValue, primary_key: true
+        field :channel_id, PkeyValue
         field :ack, PkeyValue
     end
 end
@@ -93,12 +93,12 @@ post "/api/channels/:id/mark-read" do |ctx|
     session = ctx.ensure_session
 
     id = ctx.params.url["id"]?.assert_string.to_i32
-    raise Decent::IncompleteParametersException.new("Missing channel ID.", {id: true}) if id.nil?
     last_msg = Repo.get_by(Message, channel_id: id).as(Message?)
-    return Decent.empty_json if last_msg.nil?
+    next Decent.empty_json if last_msg.nil?
 
-    ack = Ack.new
-    ack.user_id = Repo.get_association(session, :user).id
+    user_id = Repo.get_association(session, :user).as(Decent::User).id
+    ack = Repo.get_by(Ack, user_id: user_id, channel_id: id) || Ack.new
+    ack.user_id = user_id
     ack.channel_id = id
     ack.ack = last_msg.id
 
@@ -113,7 +113,7 @@ get "/api/channels/:id/messages" do |ctx|
 
     query = Crecto::Repo::Query.where(channel_id: id)
         .order_by("created DESC")
-        .limit(limit)
+        .limit(limit.to_i32)
 
     unless before.nil?
         b = before.as(String).to_i32
@@ -124,4 +124,56 @@ get "/api/channels/:id/messages" do |ctx|
         a = after.as(String).to_i32
         query.where("id > ?", [a])
     end
+
+    messages = Repo.all(Message, query)
+    {messages: messages}.to_json
+end
+
+get "/api/channels/:id/pins" do |ctx|
+    id = ctx.params.url["id"]?.assert_string.to_i32
+    channel = Repo.get(DChannel, id)
+    assert_found channel, "That channel wasn't found!"
+
+    pins = Repo.get_association(channel, :pins).as(Array(Message))
+
+    {pins: pins}.to_json
+end
+
+post "/api/channels/:id/pins" do |ctx|
+    session = ctx.ensure_session
+    session.ensure_admin
+
+    id = ctx.params.url["id"]?.assert_string.to_i32
+    msg_id = ctx.params.json["messageID"]?.assert_string.to_i32
+    channel = Repo.get(DChannel, id)
+    message = Repo.get(Message, msg_id)
+    assert_found channel, message, "Channel or message not found."
+
+    pins = Repo.get_association(channel, :pins).as(Array(Message))
+    assert_found pins, "Pins do not exist?"
+
+    pins << message
+    Repo.update(channel)
+
+    Decent.empty_json
+end
+
+delete "/api/channels/:id/pins/:pin_id" do |ctx|
+    session = ctx.ensure_session
+    session.ensure_admin
+
+    ch_id = ctx.params.url["id"]?.assert_string.to_i32
+    msg_id = ctx.params.url["pin_id"]?.assert_string.to_i32
+
+    channel = Repo.get(DChannel, ch_id)
+    message = Repo.get(Message, msg_id)
+    assert_found channel, message, "Channel or message not found."
+
+    pins = Repo.get_association(channel, :pins).as(Array(Message))
+    assert_found pins, "Pins do not exist?"
+
+    pins.delete(message)
+    Repo.update(channel)
+
+    Decent.empty_json
 end

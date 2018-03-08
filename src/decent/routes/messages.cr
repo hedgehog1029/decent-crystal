@@ -30,7 +30,7 @@ end
 
 post "/api/messages" do |ctx|
     session = ctx.ensure_session
-    channel_id = ctx.params.json["channelID"]?.assert_string
+    channel_id = ctx.params.json["channelID"]?.assert_string.to_i32
     text = ctx.params.json["text"]?.assert_string
     user = session.user
 
