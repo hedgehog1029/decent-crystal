@@ -34,6 +34,7 @@ post "/api/emotes" do |ctx|
 
     raise Decent::InvalidParameterException.new("Invalid emote payload!") unless changes.valid?
 
+    ctx.sockets.broadcast "emote/new", emote: changes.instance
     Decent.empty_json
 end
 
@@ -55,5 +56,6 @@ delete "/api/emotes/:shortcode" do |ctx|
     emote = Repo.get(Emote, shortcode)
     Repo.delete(emote) unless emote.nil?
 
+    ctx.sockets.broadcast "emote/delete", shortcode: shortcode
     Decent.empty_json
 end

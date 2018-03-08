@@ -1,6 +1,6 @@
 module Decent
     class Client
-        @session : Decent::Session?
+        @session_id : Int32?
 
         def initialize(@socket : HTTP::WebSocket)
             @socket.on_message(&->self.on_message(String))
@@ -22,7 +22,7 @@ module Decent
         end
 
         def ping
-            send {evt: "pingdata"}
+            send({evt: "pingdata"})
         end
 
         def on_message(message : String)
@@ -30,9 +30,10 @@ module Decent
             event = payload["evt"].as_s
 
             if event == "pongdata"
-                session_id = payload["data"]["sessionID"].as_i
-                @session = Repo.get(Decent::Session, session_id)
+                @session_id = payload["data"]["sessionID"].as_i
             end
+
+            nil
         end
     end
 
@@ -44,10 +45,15 @@ module Decent
         def new_socket(socket : HTTP::WebSocket)
             client = Client.new socket
             @clients << client
+
+            socket.on_close {
+                c = @clients.find { |s| s == socket }
+                @clients.delete(c) unless c.nil?
+            }
         end
 
-        def broadcast(message : Object)
-            text = message.to_json
+        def broadcast(evt : String, **data)
+            text = {evt: evt, data: data}.to_json
 
             @clients.each do |c|
                 c.send(text)

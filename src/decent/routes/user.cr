@@ -22,6 +22,7 @@ post "/api/users" do |ctx|
     rs = Repo.insert(user)
     raise Decent::NameAlreadyTakenException.new("An error occured") unless rs.valid?
 
+    ctx.sockets.broadcast "user/new", user: rs.instance
     {user: rs.instance}.to_json
 end
 
@@ -56,7 +57,8 @@ patch "/api/users/:id" do |ctx|
     end
 
     # TODO: implement all of this endpoint
-    Repo.update(user)
+    rs = Repo.update(user)
+    ctx.sockets.broadcast "user/update", user: rs.instance
     Decent.empty_json
 end
 

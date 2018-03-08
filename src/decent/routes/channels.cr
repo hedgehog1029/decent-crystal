@@ -44,6 +44,7 @@ post "/api/channels" do |ctx|
     r = Repo.insert(ch)
     raise Decent::InvalidParameterException.new("Invalid parameters") unless r.valid?
 
+    ctx.sockets.broadcast "channel/new", channel: r.instance
     {channelID: r.instance.id}.to_json
 end
 
@@ -72,6 +73,7 @@ patch "/api/channels/:id" do |ctx|
     channel.name = new_name
     Repo.update(channel)
 
+    ctx.sockets.broadcast "channel/update", channel: channel
     Decent.empty_json
 end
 
@@ -86,6 +88,7 @@ delete "/api/channels/:id" do |ctx|
     assert_found channel, "That channel wasn't found!"
     Repo.delete(channel)
 
+    ctx.sockets.broadcast "channel/delete", channelID: channel.id
     Decent.empty_json
 end
 
@@ -155,6 +158,7 @@ post "/api/channels/:id/pins" do |ctx|
     pins << message
     Repo.update(channel)
 
+    ctx.sockets.broadcast "channel/pins/add", message: message
     Decent.empty_json
 end
 
@@ -175,5 +179,6 @@ delete "/api/channels/:id/pins/:pin_id" do |ctx|
     pins.delete(message)
     Repo.update(channel)
 
+    ctx.sockets.broadcast "channel/pins/remove", messageID: msg_id
     Decent.empty_json
 end

@@ -41,6 +41,7 @@ post "/api/messages" do |ctx|
     ch = Repo.insert(msg)
 
     raise Decent::InvalidParameterException.new("Error committing data.") unless ch.valid?
+    ctx.sockets.broadcast "message/new", message: msg
 
     {messageID: ch.instance.id}.to_json
 end
@@ -65,6 +66,7 @@ patch "/api/messages/:id" do |ctx|
     msg.text = new_text
     Repo.update(msg)
 
+    ctx.sockets.broadcast "message/edit", message: msg
     Decent.empty_json
 end
 
