@@ -26,9 +26,14 @@ module Decent
         def call(ctx)
             session_id = ctx.params.json["sessionID"]? ||
                 ctx.params.query["sessionID"]? ||
-                ctx.request.headers["X-Session-ID"]?
+                ctx.request.headers["x-session-id"]?
+
+            if session_id.nil?
+                return call_next(ctx)
+            end
 
             ctx.set("session_id", session_id.as(String).to_i32)
+            return call_next(ctx)
         end
     end
 end

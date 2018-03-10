@@ -5,11 +5,10 @@ class Message < Crecto::Model
         field :channel_id, PkeyValue
         field :text, String
         belongs_to :user, Decent::User
-        field :created, Int64
         field :edited, Int64
     end
 
-    validate_required [:channel_id, :text, :created]
+    validate_required [:channel_id, :text]
 
     def to_json(builder : JSON::Builder)
         builder.object do
@@ -22,7 +21,7 @@ class Message < Crecto::Model
             builder.field "authorID", user.id
             builder.field "authorUsername", user.username
             builder.field "authorAvatarURL", user.avatar
-            builder.field "dateCreated", @created
+            builder.field "dateCreated", @created_at
             builder.field "dateEdited", @edited
         end
     end

@@ -30,13 +30,12 @@ module Decent
         def login(username : String, password : String) : Session?
             user = Repo.get_by(User, username: username)
             raise Decent::NotFoundException.new("User not found.") if user.nil?
-
             remote_pw = user.password.as(String)
-            hashed = Crypto::Bcrypt::Password.create(password)
+            hashed = Crypto::Bcrypt::Password.new(remote_pw)
 
-            if hashed == remote_pw
+            if hashed == password
                 session = Session.new
-                session.created = Time.utc_now.epoch_ms
+                session.created_at = Time.utc_now
                 session.user_id = user.id
 
                 Repo.insert(session).instance
@@ -53,13 +52,7 @@ module Decent
         @user : User?
 
         schema "sessions" do
-            field :created, Int64
             field :user_id, PkeyValue
-        end
-
-        # Get time that session was created
-        def get_created : Time
-            Time.epoch_ms(@created)
         end
 
         def user
@@ -89,7 +82,7 @@ module Decent
         def to_json(builder : JSON::Builder)
             builder.object do
                 builder.field "id", @id
-                builder.field "dateCreated", @created
+                builder.field "dateCreated", @created_at
             end
         end
     end

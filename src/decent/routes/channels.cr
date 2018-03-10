@@ -115,7 +115,7 @@ get "/api/channels/:id/messages" do |ctx|
     limit = ctx.params.query["limit"]? || 50
 
     query = Crecto::Repo::Query.where(channel_id: id)
-        .order_by("created DESC")
+        .order_by("created_at DESC")
         .limit(limit.to_i32)
 
     unless before.nil?

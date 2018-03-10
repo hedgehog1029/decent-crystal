@@ -5,8 +5,6 @@ require "json"
 require "yaml"
 require "./decent/*"
 
-add_handler Decent::ApiHandler.new
-
 module Decent
     class Instances
         def initialize
@@ -39,9 +37,8 @@ class HTTP::Server
     end
 end
 
-get "/" do
-    "This server is WIP and does not serve the client currently."
-end
+add_handler Decent::ApiHandler.new
+add_handler Decent::SessionHandler.new
 
 ws "/" do |socket, ctx|
     ctx.sockets.new_socket(socket)

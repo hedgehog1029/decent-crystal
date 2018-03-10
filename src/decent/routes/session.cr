@@ -7,7 +7,7 @@ end
 
 post "/api/sessions" do |ctx|
     user = ctx.params.json["username"]?.assert_string
-    pass = ctx.params.json["pass"]?.assert_string
+    pass = ctx.params.json["password"]?.assert_string
 
     result = ctx.sessions.login(user, pass)
 
