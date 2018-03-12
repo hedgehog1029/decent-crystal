@@ -105,6 +105,7 @@ post "/api/channels/:id/mark-read" do |ctx|
     ack.channel_id = id
     ack.ack = last_msg.id
 
+    Repo.update(ack)
     Decent.empty_json
 end
 

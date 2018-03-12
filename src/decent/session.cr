@@ -3,7 +3,7 @@ require "crypto/bcrypt/password"
 module Decent
     class Sessions
         def ensure(ctx : HTTP::Server::Context) : Session
-            session_id = ctx.get("session_id").as(Int32)
+            session_id = ctx.get("session_id").as(String)
 
             session = Repo.get(Session, session_id)
             raise Decent::InvalidSessionException.new("No session with that ID!") if session.nil?
@@ -13,7 +13,7 @@ module Decent
         end
 
         def session?(ctx : HTTP::Server::Context) : Session?
-            session_id = ctx.get("session_id").as(Int32)
+            session_id = ctx.get("session_id").as(String)
             Repo.get(Session, session_id)
         rescue KeyError
             nil
@@ -35,6 +35,7 @@ module Decent
 
             if hashed == password
                 session = Session.new
+                session.sid = Random::Secure.hex(12)
                 session.created_at = Time.utc_now
                 session.user_id = user.id
 
@@ -52,6 +53,7 @@ module Decent
         @user : User?
 
         schema "sessions" do
+            field :sid, String, primary_key: true
             field :user_id, PkeyValue
         end
 
@@ -81,7 +83,7 @@ module Decent
 
         def to_json(builder : JSON::Builder)
             builder.object do
-                builder.field "id", @id
+                builder.field "id", @sid
                 builder.field "dateCreated", @created_at
             end
         end

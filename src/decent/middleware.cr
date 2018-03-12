@@ -3,13 +3,14 @@ module Decent
         def call(ctx)
             if ctx.request.path.starts_with?("/api")
                 ctx.response.content_type = "application/json"
+                ctx.response.headers["Access-Control-Allow-Origin"] = "*"
 
                 begin
                     return call_next(ctx)
                 rescue ex : Decent::ApiException
                     res = {error: ex}.to_json
                 rescue ex : Exception
-                    error = {code: "UNKNOWN", message: ex.message}
+                    error = {code: "FAILED", message: ex.message}
                     res = {error: error}.to_json
                 end
 
@@ -32,7 +33,7 @@ module Decent
                 return call_next(ctx)
             end
 
-            ctx.set("session_id", session_id.as(String).to_i32)
+            ctx.set("session_id", session_id.as(String))
             return call_next(ctx)
         end
     end

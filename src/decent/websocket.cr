@@ -1,6 +1,6 @@
 module Decent
     class Client
-        @session_id : Int32?
+        @session_id : String?
 
         def initialize(@socket : HTTP::WebSocket)
             @socket.on_message(&->self.on_message(String))
@@ -30,7 +30,7 @@ module Decent
             event = payload["evt"].as_s
 
             if event == "pongdata"
-                @session_id = payload["data"]["sessionID"].as_i
+                @session_id = payload["data"]["sessionID"].as_s?
             end
 
             nil

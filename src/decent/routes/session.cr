@@ -14,7 +14,7 @@ post "/api/sessions" do |ctx|
     if result.nil?
         raise Decent::NotFoundException.new("The username or password is incorrect.")
     else
-        {sessionID: result.id}.to_json
+        {sessionID: result.sid}.to_json
     end
 end
 
