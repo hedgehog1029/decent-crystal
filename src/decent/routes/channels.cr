@@ -130,7 +130,7 @@ get "/api/channels/:id/messages" do |ctx|
     end
 
     messages = Repo.all(Message, query)
-    {messages: messages}.to_json
+    {messages: messages.as(Array)}.to_json
 end
 
 get "/api/channels/:id/pins" do |ctx|

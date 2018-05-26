@@ -11,7 +11,7 @@ module Decent
             end
         end
 
-        getter session
+        getter session, socket
 
         def send(msg : String)
             @socket.send(msg)
@@ -29,7 +29,7 @@ module Decent
             payload = JSON.parse(message)
             event = payload["evt"].as_s
 
-            if event == "pongdata"
+            if event == "pongdata" && payload["data"].as_h.has_key?("sessionID")
                 @session_id = payload["data"]["sessionID"].as_s?
             end
 
@@ -47,7 +47,7 @@ module Decent
             @clients << client
 
             socket.on_close {
-                c = @clients.find { |s| s == socket }
+                c = @clients.find { |c| c.socket == socket }
                 @clients.delete(c) unless c.nil?
             }
         end
@@ -58,6 +58,10 @@ module Decent
             @clients.each do |c|
                 c.send(text)
             end
+        end
+
+        def find_by_session(session_id : String)
+            @clients.find { |c| c.session_id == session_id }
         end
     end
 end

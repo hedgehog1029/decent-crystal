@@ -20,9 +20,12 @@ class Message < Crecto::Model
             builder.field "text", @text
             builder.field "authorID", user.id
             builder.field "authorUsername", user.username
+            builder.field "authorFlair", user.flair || ""
             builder.field "authorAvatarURL", user.avatar
             builder.field "dateCreated", @created_at
             builder.field "dateEdited", @edited
+            builder.field "reactions", {} of String => String
+            builder.field "mentionedUserIDs", [] of String
         end
     end
 end
