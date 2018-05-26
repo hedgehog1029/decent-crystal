@@ -23,6 +23,24 @@ module Decent
         end
     end
 
+    class OptionsHandler < Kemal::Handler
+        def call(ctx)
+            if ctx.request.method == "OPTIONS"
+                allowed_methods = ["GET", "POST"].join ", "
+
+                ctx.response.headers["Allow"] = allowed_methods
+                ctx.response.headers["Access-Control-Allow-Methods"] = allowed_methods
+                ctx.response.headers["Access-Control-Allow-Headers"] = ctx.request.headers["Access-Control-Request-Headers"]
+
+                ctx.response.status_code = 200
+                ctx.response.print "Success"
+                ctx.response.close
+            else
+                return call_next(ctx)
+            end
+        end
+    end
+
     class SessionHandler < Kemal::Handler
         def call(ctx)
             session_id = ctx.params.json["sessionID"]? ||
