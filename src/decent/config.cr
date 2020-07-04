@@ -1,9 +1,9 @@
 module Decent
     class Config
-        YAML.mapping(
-            useSecure: Bool,
-            useAuthorization: Bool
-        )
+        include YAML::Serializable
+
+        property useSecure : Bool
+        property useAuthorization : Bool
 
         def to_json(builder : JSON::Builder)
             builder.object do

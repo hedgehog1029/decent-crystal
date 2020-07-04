@@ -36,7 +36,7 @@ module Decent
             if hashed == password
                 session = Session.new
                 session.sid = Random::Secure.hex(12)
-                session.created_at = Time.utc_now
+                session.created_at = Time.utc
                 session.user_id = user.id
 
                 Repo.insert(session).instance

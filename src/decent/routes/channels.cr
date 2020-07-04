@@ -99,7 +99,7 @@ post "/api/channels/:id/mark-read" do |ctx|
     last_msg = Repo.get_by(Message, channel_id: id).as(Message?)
     next Decent.empty_json if last_msg.nil?
 
-    user_id = Repo.get_association(session, :user).as(Decent::User).id
+    user_id = session.user.id
     ack = Repo.get_by(Ack, user_id: user_id, channel_id: id) || Ack.new
     ack.user_id = user_id
     ack.channel_id = id

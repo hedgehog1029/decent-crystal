@@ -1,26 +1,30 @@
-version: 1.0
+version: 2.0
 shards:
   crecto:
-    github: Crecto/crecto
-    version: 0.8.4
+    git: https://github.com/Crecto/crecto.git
+    version: 0.11.2+git.commit.797b153187a34a3cfcba58ed345fea88ea428de3
 
   db:
-    github: crystal-lang/crystal-db
-    version: 0.5.0
+    git: https://github.com/crystal-lang/crystal-db.git
+    version: 0.9.0
+
+  exception_page:
+    git: https://github.com/crystal-loot/exception_page.git
+    version: 0.1.4
 
   kemal:
-    github: kemalcr/kemal
-    version: 0.22.0
+    git: https://github.com/kemalcr/kemal.git
+    version: 0.26.1+git.commit.a8c0f09b858162bd13c96663febef5527b322a32
 
   kilt:
-    github: jeromegn/kilt
+    git: https://github.com/jeromegn/kilt.git
     version: 0.4.0
 
   radix:
-    github: luislavena/radix
-    version: 0.3.8
+    git: https://github.com/luislavena/radix.git
+    version: 0.3.9
 
   sqlite3:
-    github: crystal-lang/crystal-sqlite3
-    version: 0.9.0
+    git: https://github.com/crystal-lang/crystal-sqlite3.git
+    version: 0.16.0
 

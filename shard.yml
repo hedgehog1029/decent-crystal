@@ -11,11 +11,13 @@ targets:
 dependencies:
     kemal:
         github: kemalcr/kemal
+        branch: master
     sqlite3:
         github: crystal-lang/crystal-sqlite3
     crecto:
         github: Crecto/crecto
+        branch: master
 
-crystal: 0.24.1
+crystal: 0.35.1
 
 license: MIT

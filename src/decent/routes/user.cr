@@ -52,7 +52,7 @@ patch "/api/users/:id" do |ctx|
 
     pw_obj = ctx.params.json["password"]?
     unless pw_obj.nil?
-        pw = pw_obj.as(Hash(String, JSON::Type))
+        pw = pw_obj.as(Hash(String, JSON::Any))
         # pw["old"]
     end
 
