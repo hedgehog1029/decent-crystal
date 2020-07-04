@@ -3,6 +3,7 @@ require "sqlite3"
 require "crecto"
 require "json"
 require "yaml"
+require "openssl"
 require "./decent/*"
 
 add_handler Decent::ApiHandler.new
@@ -52,6 +53,15 @@ class HTTP::Server::Response
       previous_def
     end
   end
+end
+
+module Kemal
+    class WebSocketHandler
+        def call(context : HTTP::Server::Context)
+            return call_next(context) unless context.ws_route_found? && websocket_upgrade_request?(context)
+            context.websocket.call(context)
+        end
+    end
 end
 
 # == TEMPORARY PATCH END ==

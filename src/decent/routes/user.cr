@@ -56,6 +56,15 @@ patch "/api/users/:id" do |ctx|
         # pw["old"]
     end
 
+    email = ctx.params.json["email"]?
+    unless email.nil?
+        email_addr = email.assert_string
+        hash = OpenSSL::Digest.new("SHA256").update(email_addr).final.hexstring
+
+        # TODO: DNS SRV federated avatar resolving
+        user.avatar = "https://seccdn.libravatar.org/avatar/#{hash}?s=256"
+    end
+
     # TODO: implement all of this endpoint
     rs = Repo.update(user)
     ctx.sockets.broadcast "user/update", user: rs.instance

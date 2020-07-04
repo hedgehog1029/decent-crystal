@@ -11,7 +11,7 @@ class DChannel < Crecto::Model
 
     def to_json(builder : JSON::Builder)
         builder.object do
-            builder.field "id", @id
+            builder.field "id", @id.to_s
             builder.field "name", @name
         end
     end
@@ -19,6 +19,9 @@ end
 
 class Ack < Crecto::Model
     include Crecto::Schema
+
+    set_created_at_field nil
+    set_updated_at_field nil
 
     schema "acks" do
         field :user_id, PkeyValue, primary_key: true
@@ -116,7 +119,7 @@ get "/api/channels/:id/messages" do |ctx|
     limit = ctx.params.query["limit"]? || 50
 
     query = Crecto::Repo::Query.where(channel_id: id)
-        .order_by("created_at DESC")
+        .order_by("created_at ASC")
         .limit(limit.to_i32)
 
     unless before.nil?

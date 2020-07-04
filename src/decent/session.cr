@@ -33,7 +33,7 @@ module Decent
             remote_pw = user.password.as(String)
             hashed = Crypto::Bcrypt::Password.new(remote_pw)
 
-            if hashed == password
+            if hashed.verify(password)
                 session = Session.new
                 session.sid = Random::Secure.hex(12)
                 session.created_at = Time.utc
@@ -84,7 +84,7 @@ module Decent
         def to_json(builder : JSON::Builder)
             builder.object do
                 builder.field "id", @sid
-                builder.field "dateCreated", @created_at
+                builder.field "dateCreated", @created_at.try &.to_unix_ms
             end
         end
     end

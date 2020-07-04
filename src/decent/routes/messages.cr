@@ -16,7 +16,7 @@ class Message < Crecto::Model
             raise "Invalid user" if user.nil?
 
             builder.field "id", @id
-            builder.field "channelID", @channel_id
+            builder.field "channelID", @channel_id.to_s
             builder.field "text", @text
             builder.field "authorID", user.id
             builder.field "authorUsername", user.username
@@ -44,7 +44,7 @@ post "/api/messages" do |ctx|
     ch = Repo.insert(msg)
 
     raise Decent::InvalidParameterException.new("Error committing data.") unless ch.valid?
-    ctx.sockets.broadcast "message/new", message: msg
+    ctx.sockets.broadcast "message/new", message: ch.instance
 
     {messageID: ch.instance.id}.to_json
 end
